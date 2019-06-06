@@ -729,6 +729,7 @@ const _closeAllTabs = () => { // XXX trigger this when switching servers
 };
 const _openParty = (datachannel, host) => {
   xrmp = new XRMultiplayerTHREE(new XRMultiplayer(datachannel));
+
   xrmp.localPlayerMesh = null;
   xrmp.onopen = () => {
     xrmp.localPlayerMesh = xrmp.createLocalPlayerMesh(undefined, {});
@@ -1007,7 +1008,10 @@ const {
             pc = new RTCPeerConnection(rtcConfig);
             dc = pc.createDataChannel("chat", {negotiated: true, id: 0});
 
-            dc.onopen = () => console.log("------ dc.onopen");
+            dc.onopen = () => {
+              console.log("dc.onopen");
+              _openParty(dc, true);
+            }
             dc.onmessage = e => console.log(`> ${e.data}`);
             pc.oniceconnectionstatechange = e => console.log(pc.iceConnectionState);
 
@@ -1029,6 +1033,11 @@ const {
           async function createAnswer() {
             pc = new RTCPeerConnection(rtcConfig);
             dc = pc.createDataChannel("chat", {negotiated: true, id: 0});
+
+            dc.onopen = () => {
+              console.log("dc.onopen");
+              _openParty(dc, true);
+            }
 
             if (pc.signalingState != "stable") return;
 
