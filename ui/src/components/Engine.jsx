@@ -484,9 +484,10 @@ class JoinServerSettings extends React.Component {
     super(props);
 
     this.state = {
-      pcState: null,
-      dcState: null
     };
+  }
+
+  componentDidMount() {
   }
 
   classNames() {
@@ -500,76 +501,59 @@ class JoinServerSettings extends React.Component {
   onMetricsBlur() {
   }
 
-
-
   async createOffer() {
     const button = document.getElementById('button');
     const offer = document.getElementById('offer');
     const answer = document.getElementById('answer');
 
-    const config = {iceServers: [{urls: "stun:stun.1.google.com:19302"}]};
-    const pc = new RTCPeerConnection(config);
-    const dc = pc.createDataChannel("chat", {negotiated: true, id: 0});
+    window.addEventListener('message',function(e) {
+      offer.value = e.data.sdp;
+    },false);
 
-    dc.onopen = () => console.log("------ dc.onopen");
-    dc.onmessage = e => console.log(`> ${e.data}`);
-    pc.oniceconnectionstatechange = e => console.log(pc.iceConnectionState);
+    window.postMessage({
+      method: 'createOffer',
+    });
 
     button.disabled = true;
-    await pc.setLocalDescription(await pc.createOffer());
-    pc.onicecandidate = ({candidate}) => {
-      if (candidate) return;
-      offer.value = pc.localDescription.sdp;
-      offer.select();
-      answer.placeholder = "Paste answer here";
-    };
-
-    this.setState({
-      pcState: pc,
-      dcState: dc
-    });
   }
 
-  async createAnswer() {
+  async createAnswer(sdp) {
     const button = document.getElementById('button');
     const offer = document.getElementById('offer');
     const answer = document.getElementById('answer');
-    const config = {iceServers: [{urls: "stun:stun.1.google.com:19302"}]};
-    const pc = new RTCPeerConnection(config);
-    const dc = pc.createDataChannel("chat", {negotiated: true, id: 0});
 
-    if (pc.signalingState != "stable") return;
+    window.addEventListener('message',function(e) {
+      answer.focus();
+      answer.value = e.data.sdp;
+      answer.select();
+    },false);
+
+    window.postMessage({
+      method: 'createOffer',
+      sdp: offer.value
+    });
 
     button.disabled = offer.disabled = true;
-    await pc.setRemoteDescription({type: "offer", sdp: offer.value});
-    await pc.setLocalDescription(await pc.createAnswer());
-
-    pc.onicecandidate = ({candidate}) => {
-      if (candidate) return;
-      answer.focus();
-      answer.value = pc.localDescription.sdp;
-      answer.select();
-    };
   };
 
-  async submitAnswer(e) {
-    // xxx not tested yet
+  submitAnswer(e) {
     const answer = document.getElementById('answer');
-    const pc = this.state.pcState;
 
-
-    if (e.key != 'Enter' || pc.signalingState != "have-local-offer") return;
+    window.postMessage({
+      method: 'submitAnswer',
+      sdp: answer.value
+    });
 
     answer.disabled = true;
-    pc.setRemoteDescription({type: "answer", sdp: answer.value});
   };
 
-  handleKeyPress = (event) => {
-  if(event.key == 'Enter'){
-    console.log('enter press here! ');
-    this.createAnswer();
+  joinServer() {
+    // console.log("joinServer ---- datachannel = " + this.state.dcState);
+    // window.postMessage({
+    //   method: 'joinServer',
+    //   datachannel: this.state.dcState,
+    // });
   }
-}
 
   render() {
     return (
@@ -578,10 +562,19 @@ class JoinServerSettings extends React.Component {
         <div className="settings-foreground">
           <div className="title">--- webrtc ---</div>
           <div>
-            <label>Offer <input type="text" id="offer" placeholder="Paste offer here" onKeyPress={this.handleKeyPress} onBlur={() => this.onMetricsBlur()} /></label>
-            <label>Answer <input type="text" id="answer" onKeyPress={this.submitAnswer} onBlur={() => this.onMetricsBlur()} /></label>
-            <div className="button" id="button" onClick={e => this.createOffer()}>
+            <label>Offer <textarea id="offer" placeholder="Paste offer here" onBlur={() => this.onMetricsBlur()} /></label>
+            <label>Answer <textarea id="answer" onBlur={() => this.onMetricsBlur()} /></label>
+            <div className="button" id="button" onClick={() => this.createOffer()}>
               <div className="label">Create Offer</div>
+            </div>
+            <div className="button" id="button" onClick={() => this.createAnswer()}>
+              <div className="label">Create Answer</div>
+            </div>
+            <div className="button" id="button" onClick={() => this.submitAnswer()}>
+              <div className="label">Submit Answer</div>
+            </div>
+            <div className="button" id="button" onClick={() => this.joinServer()}>
+              <div className="label">joinServer</div>
             </div>
           </div>
         </div>
