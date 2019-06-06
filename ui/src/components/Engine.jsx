@@ -261,7 +261,6 @@ class Engine extends React.Component {
               <div className={this.menuItemPopupClassNames('world')}>
                 <div className="menu-item-popup-item">New</div>
                 <div className="menu-item-popup-item">Exit</div>
-                <div className="menu-item-popup-item" onClick={() => this.joinServer()}>Join Server</div>
                 <div className="menu-item-popup-item" onClick={() => this.openJoinServerSettings('joinServerSettings')}>Join Server Settings...</div>
               </div>
               <i class="fal fa-cube"/>
@@ -359,7 +358,7 @@ class Engine extends React.Component {
             </div>
           </div>
           <Settings settings={this.state.settings === 'settings'} open={!!this.state.settings} close={() => this.openSettings(null)}/>
-          <JoinServerSettings settings={this.state.joinServerSettings === 'settings'} open={!!this.state.joinServerSettings} close={() => this.openJoinServerSettings(null)}/>
+          <JoinServerSettings settings={this.state.joinServerSettings === 'joinServerSettings'} open={!!this.state.joinServerSettings} close={() => this.openJoinServerSettings(null)}/>
           <div className="engine-split">
             <div className="engine-left">
               <div className="engine-render" id="engine-render" onClick={() => this.onEngineRenderClick()} />
