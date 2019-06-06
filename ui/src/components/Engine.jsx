@@ -542,12 +542,6 @@ class JoinPartySettings extends React.Component {
     answer.disabled = true;
   };
 
-  joinParty() {
-    window.postMessage({
-      method: 'joinParty',
-    });
-  }
-
   render() {
     return (
       <div className={this.classNames()}>
@@ -572,12 +566,6 @@ class JoinPartySettings extends React.Component {
               <div className="label"><b>Party Joiners:</b></div>
               <div className="button" id="button" onClick={() => this.createAnswer()}>
                 <div className="label"><b>1: </b>Create Answer</div>
-              </div>
-            </div>
-            <hr/>
-            <div className="partyEveryone">
-              <div className="button" id="button" onClick={() => this.joinParty()}>
-                <div className="label"><b>Final Step for both:</b> Start XRMP</div>
               </div>
             </div>
           </div>
