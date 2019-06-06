@@ -25,7 +25,7 @@ class Engine extends React.Component {
         flags: [],
         item: null,
         settings: null,
-        joinServerSettings: null,
+        joinPartySettings: null,
         urlFocus: false,
         addTab: 'template',
         url: 'https://aframe.io/a-painter/',
@@ -130,10 +130,10 @@ class Engine extends React.Component {
       });
     }
 
-    openJoinServerSettings(joinServerSettings) {
+    openJoinPartySettings(joinPartySettings) {
       this.setState({
         item: null,
-        joinServerSettings,
+        joinPartySettings,
       }, () => {
         this.postMenuStatus();
       });
@@ -229,9 +229,9 @@ class Engine extends React.Component {
       });
     }
 
-    joinServer() {
+    joinParty() {
       window.postMessage({
-        method: 'joinServer',
+        method: 'joinParty',
       });
     }
 
@@ -239,7 +239,7 @@ class Engine extends React.Component {
       this.setState({
         item: null,
         settings: null,
-        joinServerSettings: null,
+        joinPartySettings: null,
         urlFocus: false,
       }, () => {
         this.postMenuStatus();
@@ -249,7 +249,7 @@ class Engine extends React.Component {
     postMenuStatus() {
       window.postMessage({
         method: 'menu',
-        open: this.state.item !== null || this.state.settings !== null || this.state.joinServerSettings !== null ||this.state.urlFocus,
+        open: this.state.item !== null || this.state.settings !== null || this.state.joinPartySettings !== null ||this.state.urlFocus,
       });
     }
 
@@ -261,7 +261,7 @@ class Engine extends React.Component {
               <div className={this.menuItemPopupClassNames('world')}>
                 <div className="menu-item-popup-item">New</div>
                 <div className="menu-item-popup-item">Exit</div>
-                <div className="menu-item-popup-item" onClick={() => this.openJoinServerSettings('joinServerSettings')}>Join Server Settings...</div>
+                <div className="menu-item-popup-item" onClick={() => this.openJoinPartySettings('joinPartySettings')}>Join Party Settings...</div>
               </div>
               <i class="fal fa-cube"/>
               {/* <div>World</div> */}
@@ -358,7 +358,7 @@ class Engine extends React.Component {
             </div>
           </div>
           <Settings settings={this.state.settings === 'settings'} open={!!this.state.settings} close={() => this.openSettings(null)}/>
-          <JoinServerSettings settings={this.state.joinServerSettings === 'joinServerSettings'} open={!!this.state.joinServerSettings} close={() => this.openJoinServerSettings(null)}/>
+          <JoinPartySettings settings={this.state.joinPartySettings === 'joinPartySettings'} open={!!this.state.joinPartySettings} close={() => this.openJoinPartySettings(null)}/>
           <div className="engine-split">
             <div className="engine-left">
               <div className="engine-render" id="engine-render" onClick={() => this.onEngineRenderClick()} />
@@ -477,7 +477,7 @@ class Settings extends React.Component {
   }
 }
 
-class JoinServerSettings extends React.Component {
+class JoinPartySettings extends React.Component {
 
   constructor(props) {
     super(props);
@@ -490,7 +490,7 @@ class JoinServerSettings extends React.Component {
   }
 
   classNames() {
-    const classNames = ['joinServerSettings'];
+    const classNames = ['joinPartySettings'];
     if (this.props.open) {
       classNames.push('open');
     }
@@ -514,6 +514,8 @@ class JoinServerSettings extends React.Component {
     });
 
     button.disabled = true;
+    answer.placeholder = "Paste answer here";
+    answer.select();
   }
 
   async createAnswer(sdp) {
@@ -546,11 +548,11 @@ class JoinServerSettings extends React.Component {
     answer.disabled = true;
   };
 
-  joinServer() {
-    // console.log("joinServer ---- datachannel = " + this.state.dcState);
+  joinParty() {
+    // console.log("joinParty ---- Party = " + this.state.dcState);
     // window.postMessage({
-    //   method: 'joinServer',
-    //   datachannel: this.state.dcState,
+    //   method: 'joinParty',
+    //   Party: this.state.dcState,
     // });
   }
 
@@ -559,21 +561,32 @@ class JoinServerSettings extends React.Component {
       <div className={this.classNames()}>
         <div className="settings-background" onClick={() => this.props.close()}></div>
         <div className="settings-foreground">
-          <div className="title">--- webrtc ---</div>
+          <div className="title"><b>WebRTC Party</b></div>
           <div>
             <label>Offer <textarea id="offer" placeholder="Paste offer here" onBlur={() => this.onMetricsBlur()} /></label>
             <label>Answer <textarea id="answer" onBlur={() => this.onMetricsBlur()} /></label>
-            <div className="button" id="button" onClick={() => this.createOffer()}>
-              <div className="label">Create Offer</div>
+            <hr/>
+            <div className="partyCreator">
+              <div className="label"><b>Party Creators:</b></div>
+              <div className="button" id="button" onClick={() => this.createOffer()}>
+                <div className="label"><b>1: </b>Create Offer</div>
+              </div>
+              <div className="button" id="button" onClick={() => this.submitAnswer()}>
+                <div className="label"><b>2: </b>Submit Answer</div>
+              </div>
             </div>
-            <div className="button" id="button" onClick={() => this.createAnswer()}>
-              <div className="label">Create Answer</div>
+            <hr/>
+            <div className="partyJoiner">
+              <div className="label"><b>Party Joiners:</b></div>
+              <div className="button" id="button" onClick={() => this.createAnswer()}>
+                <div className="label"><b>1: </b>Create Answer</div>
+              </div>
             </div>
-            <div className="button" id="button" onClick={() => this.submitAnswer()}>
-              <div className="label">Submit Answer</div>
-            </div>
-            <div className="button" id="button" onClick={() => this.joinServer()}>
-              <div className="label">joinServer</div>
+            <hr/>
+            <div className="partyEveryone">
+              <div className="button" id="button" onClick={() => this.joinParty()}>
+                <div className="label"><b>Final Step for both:</b> Start XRMP</div>
+              </div>
             </div>
           </div>
         </div>
