@@ -998,11 +998,6 @@ const {
           window.browser.setSetting(key, value);
           break;
         }
-        case 'joinParty': {
-          _openParty(dc, true);
-
-          break;
-        }
         case 'createOffer': {
           async function createOffer() {
             pc = new RTCPeerConnection(rtcConfig);
