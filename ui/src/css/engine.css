@@ -184,6 +184,52 @@
   margin-right: 5px;
 }
 
+
+#Engine .joinServerSettings {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  justify-content: center;
+  align-items: center;
+}
+#Engine .joinServerSettings.open {
+  display: flex;
+}
+#Engine .joinServerSettings > .settings-background {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+#Engine .joinServerSettings > .settings-foreground {
+  position: relative;
+  width: 500px;
+  padding: 30px;
+  background-color: #FFF;
+  border-radius: 5px;
+  color: #333;
+  z-index: 1;
+}
+#Engine .joinServerSettings > .settings-foreground > .title {
+  margin-bottom: 20px;
+  font-size: 30px;
+}
+#Engine .joinServerSettings > .settings-foreground > label {
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
+#Engine .joinServerSettings > .settings-foreground > label > input[type="radio"] {
+  margin-right: 5px;
+}
+
+
+
 #Engine .engine-split {
   display: flex;
   flex: 1;
