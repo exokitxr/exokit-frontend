@@ -229,12 +229,6 @@ class Engine extends React.Component {
       });
     }
 
-    joinParty() {
-      window.postMessage({
-        method: 'joinParty',
-      });
-    }
-
     blur() {
       this.setState({
         item: null,
@@ -261,7 +255,6 @@ class Engine extends React.Component {
               <div className={this.menuItemPopupClassNames('world')}>
                 <div className="menu-item-popup-item">New</div>
                 <div className="menu-item-popup-item">Exit</div>
-                <div className="menu-item-popup-item" onClick={() => this.openJoinPartySettings('joinPartySettings')}>Join Party Settings...</div>
               </div>
               <i class="fal fa-cube"/>
               {/* <div>World</div> */}
@@ -270,6 +263,7 @@ class Engine extends React.Component {
               <div className={this.menuItemPopupClassNames('settings')}>
                 <div className="menu-item-popup-item" onClick={() => this.openSettings('settings')}>Settings...</div>
                 <div className="menu-item-popup-item" onClick={() => this.openSettings('sdkPaths')}>SDK Paths...</div>
+                <div className="menu-item-popup-item" onClick={() => this.openJoinPartySettings('joinPartySettings')}>WebRTC Party...</div>
               </div>
               <i class="fal fa-cogs"/>
               {/* <div>Settings</div> */}
@@ -549,11 +543,9 @@ class JoinPartySettings extends React.Component {
   };
 
   joinParty() {
-    // console.log("joinParty ---- Party = " + this.state.dcState);
-    // window.postMessage({
-    //   method: 'joinParty',
-    //   Party: this.state.dcState,
-    // });
+    window.postMessage({
+      method: 'joinParty',
+    });
   }
 
   render() {
