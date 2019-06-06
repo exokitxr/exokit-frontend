@@ -219,6 +219,12 @@ class Engine extends React.Component {
       });
     }
 
+    joinServer() {
+      window.postMessage({
+        method: 'joinServer',
+      });
+    }
+
     blur() {
       this.setState({
         item: null,
@@ -244,6 +250,7 @@ class Engine extends React.Component {
               <div className={this.menuItemPopupClassNames('world')}>
                 <div className="menu-item-popup-item">New</div>
                 <div className="menu-item-popup-item">Exit</div>
+                <div className="menu-item-popup-item" onClick={() => this.joinServer()}>Join Server</div>
               </div>
               <i class="fal fa-cube"/>
               {/* <div>World</div> */}
