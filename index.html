@@ -129,7 +129,7 @@ let servers = [];
 let serversLoading = false;
 let connectedDatachannel = null;
 
-const config = {iceServers: [{urls: "stun:stun.1.google.com:19302"}]};
+const rtcConfig = {iceServers: [{urls: "stun:stun.1.google.com:19302"}]};
 
 const DEFAULT_URL = 'http://lol.com';
 const DEFAULT_REGISTRY_URL = 'http://xrmp.exokit.org:9001';
@@ -727,7 +727,7 @@ const _closeAllTabs = () => { // XXX trigger this when switching servers
   tabs.length = 0;
   layers.length = 0;
 };
-const _openServer = (datachannel, host) => {
+const _openParty = (datachannel, host) => {
   xrmp = new XRMultiplayerTHREE(new XRMultiplayer(datachannel));
   xrmp.localPlayerMesh = null;
   xrmp.onopen = () => {
@@ -997,14 +997,14 @@ const {
           window.browser.setSetting(key, value);
           break;
         }
-        case 'joinServer': {
-          _openServer(dc, true);
+        case 'joinParty': {
+          _openParty(dc, true);
 
           break;
         }
         case 'createOffer': {
           async function createOffer() {
-            pc = new RTCPeerConnection(config);
+            pc = new RTCPeerConnection(rtcConfig);
             dc = pc.createDataChannel("chat", {negotiated: true, id: 0});
 
             dc.onopen = () => console.log("------ dc.onopen");
@@ -1027,7 +1027,7 @@ const {
           const {sdp} = m.data;
 
           async function createAnswer() {
-            pc = new RTCPeerConnection(config);
+            pc = new RTCPeerConnection(rtcConfig);
             dc = pc.createDataChannel("chat", {negotiated: true, id: 0});
 
             if (pc.signalingState != "stable") return;
@@ -2952,7 +2952,7 @@ function animateXrScene(time, frame) {
                           const server = localServers[j];
                           const {name} = server;
 
-                          // _openServer(`${registryUrl}/servers/${name}`, true);
+                          // _openParty(`${registryUrl}/servers/${name}`, true);
                         }
 
                         intersectionSpecs[i] = null;
