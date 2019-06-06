@@ -130,7 +130,7 @@ let serversLoading = false;
 let serverConnectedUrl = null;
 
 const DEFAULT_URL = 'http://lol.com';
-const DEFAULT_REGISTRY_URL = 'http://xrmp.exokit.org:9001';
+const DEFAULT_REGISTRY_URL = 'https://xrmp.exokit.org:9001';
 const DEFAULT_SKIN_URL = 'skin2.png';
 const RAY_COLOR = 0x44c2ff;
 const RAY_HIGHLIGHT_COLOR = new THREE.Color(RAY_COLOR).multiplyScalar(0.5).getHex();
@@ -993,6 +993,20 @@ const {
         case 'setting': {
           const {key, value} = m.data;
           window.browser.setSetting(key, value);
+          break;
+        }
+        case 'joinServer': {
+          XRMultiplayer.requestServers(`${registryUrl}/servers`)
+            .then(result => {
+              servers = result.servers;
+              console.log("servers = " + servers);
+              const {name} = servers[0];
+              _openServer(`${registryUrl}/servers/${name}`, true);
+            })
+            .catch(err => {
+              console.warn(err.stack);
+            });
+
           break;
         }
         case 'fakeVrMetrics': {
