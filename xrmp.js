@@ -823,7 +823,7 @@ class XRMultiplayerEvent {
 module.exports.XRMultiplayerEvent = XRMultiplayerEvent;
 
 class XRMultiplayer extends EventEmitter {
-  constructor(url) {
+  constructor(datachannel) {
     super();
 
     const id = Math.floor(Math.random() * 0xFFFFFFFF);
@@ -836,7 +836,7 @@ class XRMultiplayer extends EventEmitter {
     this.objects = [];
     this.state = {};
 
-    const dc = url;
+    const dc = datachannel;
     dc.binaryType = 'arraybuffer';
     dc.onopen = () => {
       const e = new XRMultiplayerEvent('open');
