@@ -25,6 +25,7 @@ class Engine extends React.Component {
         flags: [],
         item: null,
         settings: null,
+        joinServerSettings: null,
         urlFocus: false,
         addTab: 'template',
         url: 'https://aframe.io/a-painter/',
@@ -124,6 +125,15 @@ class Engine extends React.Component {
       this.setState({
         item: null,
         settings,
+      }, () => {
+        this.postMenuStatus();
+      });
+    }
+
+    openJoinServerSettings(joinServerSettings) {
+      this.setState({
+        item: null,
+        joinServerSettings,
       }, () => {
         this.postMenuStatus();
       });
@@ -229,6 +239,7 @@ class Engine extends React.Component {
       this.setState({
         item: null,
         settings: null,
+        joinServerSettings: null,
         urlFocus: false,
       }, () => {
         this.postMenuStatus();
@@ -238,7 +249,7 @@ class Engine extends React.Component {
     postMenuStatus() {
       window.postMessage({
         method: 'menu',
-        open: this.state.item !== null || this.state.settings !== null || this.state.urlFocus,
+        open: this.state.item !== null || this.state.settings !== null || this.state.joinServerSettings !== null ||this.state.urlFocus,
       });
     }
 
@@ -251,6 +262,7 @@ class Engine extends React.Component {
                 <div className="menu-item-popup-item">New</div>
                 <div className="menu-item-popup-item">Exit</div>
                 <div className="menu-item-popup-item" onClick={() => this.joinServer()}>Join Server</div>
+                <div className="menu-item-popup-item" onClick={() => this.openJoinServerSettings('joinServerSettings')}>Join Server Settings...</div>
               </div>
               <i class="fal fa-cube"/>
               {/* <div>World</div> */}
@@ -347,6 +359,7 @@ class Engine extends React.Component {
             </div>
           </div>
           <Settings settings={this.state.settings === 'settings'} open={!!this.state.settings} close={() => this.openSettings(null)}/>
+          <JoinServerSettings settings={this.state.joinServerSettings === 'settings'} open={!!this.state.joinServerSettings} close={() => this.openJoinServerSettings(null)}/>
           <div className="engine-split">
             <div className="engine-left">
               <div className="engine-render" id="engine-render" onClick={() => this.onEngineRenderClick()} />
@@ -458,6 +471,118 @@ class Settings extends React.Component {
             <label><input type="radio" name="xr" value="all" checked={this.state.xr === 'all'} onChange={e => e.target.value ? this.onXrChange('all') : null} /><span>All</span></label>
             <label><input type="radio" name="xr" value="webxr" checked={this.state.xr === 'webxr'} onChange={e => e.target.value ? this.onXrChange('webxr') : null} /><span>WebXR</span></label>
             <label><input type="radio" name="xr" value="webvr" checked={this.state.xr === 'webvr'} onChange={e => e.target.value ? this.onXrChange('webvr') : null} /><span>WebVR</span></label>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+
+class JoinServerSettings extends React.Component {
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      pcState: null,
+      dcState: null
+    };
+  }
+
+  classNames() {
+    const classNames = ['joinServerSettings'];
+    if (this.props.open) {
+      classNames.push('open');
+    }
+    return classNames.join(' ');
+  }
+
+  onMetricsBlur() {
+  }
+
+
+
+  async createOffer() {
+    const button = document.getElementById('button');
+    const offer = document.getElementById('offer');
+    const answer = document.getElementById('answer');
+
+    const config = {iceServers: [{urls: "stun:stun.1.google.com:19302"}]};
+    const pc = new RTCPeerConnection(config);
+    const dc = pc.createDataChannel("chat", {negotiated: true, id: 0});
+
+    dc.onopen = () => console.log("------ dc.onopen");
+    dc.onmessage = e => console.log(`> ${e.data}`);
+    pc.oniceconnectionstatechange = e => console.log(pc.iceConnectionState);
+
+    button.disabled = true;
+    await pc.setLocalDescription(await pc.createOffer());
+    pc.onicecandidate = ({candidate}) => {
+      if (candidate) return;
+      offer.value = pc.localDescription.sdp;
+      offer.select();
+      answer.placeholder = "Paste answer here";
+    };
+
+    this.setState({
+      pcState: pc,
+      dcState: dc
+    });
+  }
+
+  async createAnswer() {
+    const button = document.getElementById('button');
+    const offer = document.getElementById('offer');
+    const answer = document.getElementById('answer');
+    const config = {iceServers: [{urls: "stun:stun.1.google.com:19302"}]};
+    const pc = new RTCPeerConnection(config);
+    const dc = pc.createDataChannel("chat", {negotiated: true, id: 0});
+
+    if (pc.signalingState != "stable") return;
+
+    button.disabled = offer.disabled = true;
+    await pc.setRemoteDescription({type: "offer", sdp: offer.value});
+    await pc.setLocalDescription(await pc.createAnswer());
+
+    pc.onicecandidate = ({candidate}) => {
+      if (candidate) return;
+      answer.focus();
+      answer.value = pc.localDescription.sdp;
+      answer.select();
+    };
+  };
+
+  async submitAnswer(e) {
+    // xxx not tested yet
+    const answer = document.getElementById('answer');
+    const pc = this.state.pcState;
+
+
+    if (e.key != 'Enter' || pc.signalingState != "have-local-offer") return;
+
+    answer.disabled = true;
+    pc.setRemoteDescription({type: "answer", sdp: answer.value});
+  };
+
+  handleKeyPress = (event) => {
+  if(event.key == 'Enter'){
+    console.log('enter press here! ');
+    this.createAnswer();
+  }
+}
+
+  render() {
+    return (
+      <div className={this.classNames()}>
+        <div className="settings-background" onClick={() => this.props.close()}></div>
+        <div className="settings-foreground">
+          <div className="title">--- webrtc ---</div>
+          <div>
+            <label>Offer <input type="text" id="offer" placeholder="Paste offer here" onKeyPress={this.handleKeyPress} onBlur={() => this.onMetricsBlur()} /></label>
+            <label>Answer <input type="text" id="answer" onKeyPress={this.submitAnswer} onBlur={() => this.onMetricsBlur()} /></label>
+            <div className="button" id="button" onClick={e => this.createOffer()}>
+              <div className="label">Create Offer</div>
+            </div>
           </div>
         </div>
       </div>
