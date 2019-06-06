@@ -666,21 +666,21 @@ class XRLocalPlayer extends EventEmitter {
     this.playerMatrix = _makePlayerMatrix();
     this.playerMatrix.id[0] = id;
 
-    xrmp.ws.send(JSON.stringify({
+    xrmp.dc.send(JSON.stringify({
       type: 'playerEnter',
       id,
       state,
     }));
   }
   pushUpdate() {
-    this.xrmp.ws.send(this.playerMatrix);
+    this.xrmp.dc.send(this.playerMatrix);
   }
   setState(update) {
     for (const k in update) {
       this.state[k] = update[k];
     }
 
-    this.xrmp.ws.send(JSON.stringify({
+    this.xrmp.dc.send(JSON.stringify({
       type: 'playerSetState',
       id: this.id,
       state: update,
@@ -691,7 +691,7 @@ class XRLocalPlayer extends EventEmitter {
     new Uint32Array(audioMessage, 0, 1)[0] = MESSAGE_TYPES.AUDIO;
     new Uint32Array(audioMessage, Uint32Array.BYTES_PER_ELEMENT, 1)[0] = this.id;
     new Float32Array(audioMessage, Uint32Array.BYTES_PER_ELEMENT*2, float32Array.length).set(float32Array);
-    this.xrmp.ws.send(audioMessage);
+    this.xrmp.dc.send(audioMessage);
   } */
 }
 module.exports.XRLocalPlayer = XRLocalPlayer;
@@ -758,14 +758,14 @@ class XRObject extends EventEmitter {
     this.objectMatrix.id[0] = id;
   }
   sendAdd() {
-    this.xrmp.ws.send(JSON.stringify({
+    this.xrmp.dc.send(JSON.stringify({
       type: 'objectAdd',
       id: this.id,
       state: this.state,
     }));
   }
   sendRemove() {
-    this.xrmp.ws.send(JSON.stringify({
+    this.xrmp.dc.send(JSON.stringify({
       type: 'objectRemove',
       id: this.id,
     }));
@@ -775,14 +775,14 @@ class XRObject extends EventEmitter {
       this.state[k] = update[k];
     }
 
-    this.xrmp.ws.send(JSON.stringify({
+    this.xrmp.dc.send(JSON.stringify({
       type: 'objectSetState',
       id: this.id,
       state: update,
     }));
   }
   /* setUpdateExpression(expression) {
-    this.xrmp.ws.send(JSON.stringify({
+    this.xrmp.dc.send(JSON.stringify({
       type: 'objectSetUpdateExpression',
       id: this.id,
       expression,
@@ -795,7 +795,7 @@ class XRObject extends EventEmitter {
     this.emit(e.type, e);
   }
   pushUpdate() {
-    this.xrmp.ws.send(this.objectMatrix);
+    this.xrmp.dc.send(this.objectMatrix);
   }
   addEventListener(name, fn) {
     return this.on(name, fn);
@@ -836,13 +836,13 @@ class XRMultiplayer extends EventEmitter {
     this.objects = [];
     this.state = {};
 
-    const ws = new WebSocket(url + '?id=' + id);
-    ws.binaryType = 'arraybuffer';
-    ws.onopen = () => {
+    const dc = url;
+    dc.binaryType = 'arraybuffer';
+    dc.onopen = () => {
       const e = new XRMultiplayerEvent('open');
       this.emit(e.type, e);
     }
-    ws.onclose = err => {
+    dc.onclose = err => {
       this.open = false;
 
       const oldRemotePlayers = this.remotePlayers.slice();
@@ -870,12 +870,12 @@ class XRMultiplayer extends EventEmitter {
       const e = new XRMultiplayerEvent('close');
       this.emit(e.type, e);
     };
-    ws.onerror = error => {
+    dc.onerror = error => {
       const e = new XRMultiplayerEvent('error');
       e.error = error;
       this.emit(e.type, e);
     };
-    ws.onmessage = m => {
+    dc.onmessage = m => {
       const {data} = m;
       if (typeof data === 'string') {
         const j = JSON.parse(data);
@@ -1078,13 +1078,13 @@ class XRMultiplayer extends EventEmitter {
         }
       }
     };
-    this.ws = ws;
+    this.dc = dc;
   }
   close() {
-    this.ws.close();
+    this.dc.close();
   }
   isOpen() {
-    // return this.ws.readyState === WebSocket.OPEN
+    // return this.dc.readyState === WebSocket.OPEN
     return this.open;
   }
   addPlayer(id, state) {
@@ -1120,7 +1120,7 @@ class XRMultiplayer extends EventEmitter {
     }
   }
   setState(update) {
-    this.ws.send(JSON.stringify({
+    this.dc.send(JSON.stringify({
       type: 'setState',
       state: update,
     }));
@@ -1143,7 +1143,7 @@ class XRMultiplayer extends EventEmitter {
     new Float32Array(geometryBuffer, Uint32Array.BYTES_PER_ELEMENT + 3*Uint32Array.BYTES_PER_ELEMENT + positions.byteLength, normals.length).set(normals);
     new Uint32Array(geometryBuffer, Uint32Array.BYTES_PER_ELEMENT + 3*Uint32Array.BYTES_PER_ELEMENT + positions.byteLength + normals.byteLength, indices.length).set(indices);
 
-    this.ws.send(geometryBuffer);
+    this.dc.send(geometryBuffer);
   }
   addEventListener(name, fn) {
     return this.on(name, fn);
