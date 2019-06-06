@@ -1126,6 +1126,12 @@ const _bindEventTarget = target => {
           transformControls = new THREE.TransformControls(camera, document.body, viewport);
           transformControls.iframe = iframe;
 
+          for(i = 0; i < tabs.length; i++){
+            if(tabs[i].iframe === iframe){
+              transformControls.transformId = tabs[i].id;
+            }
+          }
+
           transformControls.addEventListener('dragging-changed', e => {
             orbitControls.enabled = !e.value;
           });
@@ -1133,6 +1139,14 @@ const _bindEventTarget = target => {
             iframe.position = mesh.position.toArray();
             iframe.orientation = mesh.quaternion.toArray();
             iframe.scale = mesh.scale.toArray();
+            if (serverConnectedUrl) {
+              const objectMesh = xrmp.getObjectMeshes().find(objectMesh => objectMesh.object.id === transformControls.transformId);
+              const {object} = objectMesh;
+              const {objectMatrix} = object;
+              mesh.position.toArray(objectMatrix.position);
+              mesh.quaternion.toArray(objectMatrix.quaternion);
+              object.pushUpdate();
+            }
           });
 
           const mesh = new THREE.Object3D();
