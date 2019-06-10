@@ -7,9 +7,11 @@ import '../css/engine.css';
 const _postViewportMessage = () => {
   const engineRender = document.getElementById('engine-render');
   const bcr = engineRender.getBoundingClientRect();
+  const position = [window.screenX + bcr.x, window.screenY + bcr.y];
   const viewport = [bcr.x/window.innerWidth, bcr.y/window.innerHeight, bcr.width/window.innerWidth, bcr.height/window.innerHeight];
   window.postMessage({
     method: 'viewport',
+    position,
     viewport,
   });
 };

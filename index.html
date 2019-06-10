@@ -874,6 +874,7 @@ const renderer = new THREE.WebGLRenderer({
   antialias: true,
 });
 // renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
 const layers = [renderer.domElement];
 
@@ -902,23 +903,18 @@ const composeFsh = `#version 300 es
   in vec2 vUv;
   out vec4 fragColor;
   void main() {
-    vec4 uiSample = texture2D(uiTex, vec2(vUv.x, 1.0-vUv.y));
     vec4 viewportOffset = vec4(viewport.x, 1.0-viewport.y-viewport.w, viewport.x + viewport.z, 1.0-viewport.y);
     if (vUv.x >= viewportOffset.x && vUv.y >= viewportOffset.y && vUv.x < viewportOffset.z && vUv.y < viewportOffset.w) {
-      if (uiSample.r == 0.0 && uiSample.g == 1.0 && uiSample.b == 0.0 && uiSample.a == 1.0) {
-        vec4 viewportSample = texture2D(
-          viewportTex,
-          vec2(
-            (vUv.x - viewportOffset.x) / (viewportOffset.z - viewportOffset.x),
-            (vUv.y - viewportOffset.y) / (viewportOffset.w - viewportOffset.y)
-          )
-        );
-        fragColor = viewportSample;
-      } else {
-        fragColor = uiSample;
-      }
+      vec4 viewportSample = texture2D(
+        viewportTex,
+        vec2(
+          (vUv.x - viewportOffset.x) / (viewportOffset.z - viewportOffset.x),
+          (vUv.y - viewportOffset.y) / (viewportOffset.w - viewportOffset.y)
+        )
+      );
+      fragColor = viewportSample;
     } else {
-      fragColor = uiSample;
+      fragColor = vec4(0., 0., 0., 0.);
     }
   }
 `;
@@ -1048,12 +1044,21 @@ const {
   iframe.height = window.innerHeight;
   iframe.devicePixelRatio = window.devicePixelRatio;
   iframe.d = 2;
+  iframe.inline = false;
   iframe.src = 'ui/build/index.html';
   iframe.onload = () => {
     iframe.contentWindow.onmessage = m => {
       switch (m.data.method) {
         case 'viewport': {
-          viewport.set(m.data.viewport[0], m.data.viewport[1], m.data.viewport[2], m.data.viewport[3]);
+          const {position, viewport: vp} = m.data;
+          const {devicePixelRatio} = window;
+
+          const sceneCanvas = renderer.domElement;
+          sceneCanvas.left = position[0];
+          sceneCanvas.top = position[1];
+
+          viewport.fromArray(vp);
+
           break;
         }
         case 'click': {
