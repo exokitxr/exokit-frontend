@@ -3356,7 +3356,6 @@ const _startFakeVrDisplay = async (width, height) => {
     fakeXrDisplay.display = display;
 
     const _vrdisplaypresentchange = () => {
-      _emitLayersExitPresent();
 
       display.removeEventListener('vrdisplaypresentchange', _vrdisplaypresentchange);
     };
