@@ -3305,25 +3305,6 @@ function animate(time, frame) {
 }
 
 // bootstrap
-
-const _emitLayersVrDisplayActivate = () => {
-  for (let i = 0; i < layers.length; i++) {
-    const layer = layers[i];
-
-    if (layer.tagName === 'IFRAME' && layer.d === 3) {
-      layer.contentWindow.runAsync('vrdisplayactivate');
-    }
-  }
-};
-const _emitLayersExitPresent = () => {
-  for (let i = 0; i < layers.length; i++) {
-    const layer = layers[i];
-
-    if (layer.tagName === 'IFRAME' && layer.d === 3) {
-      layer.contentWindow.runAsync('exitPresent');
-    }
-  }
-};
 const _startFakeVrDisplay = async (width, height) => {
   fakeXrDisplay = new FakeXRDisplay();
   if (isFinite(width)) {
@@ -3346,7 +3327,6 @@ const _startFakeVrDisplay = async (width, height) => {
       renderer.vr.setSession(null);
       renderer.vr.setAnimationLoop(null);
 
-      _emitLayersExitPresent();
 
       session.removeEventListener('end', _end);
     };
@@ -3362,7 +3342,6 @@ const _startFakeVrDisplay = async (width, height) => {
         });
         renderer.vr.setAnimationLoop(animate);
 
-        _emitLayersVrDisplayActivate();
 
         accept();
       });
