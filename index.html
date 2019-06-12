@@ -1063,12 +1063,20 @@ const {
             _bindEventTarget('xr');
           } else if (target === 'xr') {
             console.log('xr click');
-            _endFakeVrDisplay()
-              // .then(() => _startVrDisplay())
-              .then(() => _startVrDisplay())
-              .catch(err => {
-                console.warn(err.stack);
-              });
+            if(fakeXrDisplay){
+              _endFakeVrDisplay()
+                .then(() => _startVrDisplay())
+                .catch(err => {
+                  console.warn(err.stack);
+                });
+            } else if(display){
+               _endVrDisplay()
+                .then(() => _startFakeVrDisplay())
+                .catch(err => {
+                  console.warn(err.stack);
+                });
+            }
+
           } else if (target === 'transform') {
             console.log('transform click');
           }
@@ -3324,6 +3332,8 @@ const _startVrDisplay = async () => {
       exclusive: true,
     });
 
+    display = session;
+
     const _end = () => {
       renderer.vr.enabled = false;
       renderer.vr.setSession(null);
@@ -3387,10 +3397,9 @@ const _startVrDisplay = async () => {
   }
 };
 const _endVrDisplay = async () => {
-  if (display.session) {
-    await display.session.end();
-  } else if (display) {
-    await display.exitPresent();
+  if (display) {
+    await display.end();
+    // await display.exitPresent();
   }
 
   display = null;
