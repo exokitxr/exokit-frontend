@@ -1063,6 +1063,12 @@ const {
             _bindEventTarget('xr');
           } else if (target === 'xr') {
             console.log('xr click');
+            _endFakeVrDisplay()
+              // .then(() => _startVrDisplay())
+              .then(() => _startVrDisplay())
+              .catch(err => {
+                console.warn(err.stack);
+              });
           } else if (target === 'transform') {
             console.log('transform click');
           }
@@ -1280,13 +1286,13 @@ const _bindEventTarget = target => {
         const maxX = viewport.x + viewport.z;
         const maxY = viewport.y + viewport.w;
         const shouldOrbit = x >= minX && x < maxX && y >= minY && y < maxY && !menuOpen;
-        if (shouldOrbit && !orbitControls) {
+        if (shouldOrbit && !orbitControls && fakeXrDisplay) {
           _addOrbitControls();
         } else if (!shouldOrbit && orbitControls) {
           _removeOrbitControls();
         }
 
-        if (orbitControls) {
+        if (orbitControls && fakeXrDisplay) {
           const localCamera = camera;
           localCamera.matrixWorldInverse.fromArray(fakeXrDisplay.viewMatrix);
           localCamera.matrixWorld.getInverse(localCamera.matrixWorldInverse);
@@ -3291,7 +3297,14 @@ function animateComposeContext(time, frame) {
   gl.uniform1i(gl.uiTexLocation, 0);
 
   gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, fakeXrDisplay.texture);
+  if(fakeXrDisplay){
+    gl.bindTexture(gl.TEXTURE_2D, fakeXrDisplay.texture);
+  } else if (display) {
+    // xxx
+    gl.bindTexture(gl.TEXTURE_2D, display.texture);
+  } else {
+    gl.bindTexture(gl.TEXTURE_2D, 0);
+  }
   gl.uniform1i(gl.viewportTexLocation, 1);
 
   gl.uniform4f(gl.viewportLocation, viewport.x, viewport.y, viewport.z, viewport.w);
@@ -3304,7 +3317,103 @@ function animate(time, frame) {
   animateComposeContext(time, frame);
 }
 
-// bootstrap
+// bootstrap Xr
+const _startVrDisplay = async () => {
+  if (navigator.xr) {
+    const session = await navigator.xr.requestSession({
+      exclusive: true,
+    });
+
+    const _end = () => {
+      renderer.vr.enabled = false;
+      renderer.vr.setSession(null);
+      renderer.vr.setAnimationLoop(null);
+
+      session.removeEventListener('end', _end);
+    };
+    session.addEventListener('end', _end);
+
+    await new Promise((accept, reject) => {
+      session.requestAnimationFrame((timestamp, frame) => {
+        session.layers = layers;
+
+        renderer.vr.setSession(session, {
+          frameOfReferenceType: 'stage',
+        });
+
+        const {views} = frame.getViewerPose();
+        const viewport = session.baseLayer.getViewport(views[0]);
+        const width = viewport.width;
+        const height = viewport.height;
+        // console.log("session.isPresenting = " + session.isPresenting());
+        // renderer.setSize(width * 2, height);
+
+        renderer.setAnimationLoop(null);
+
+        renderer.vr.enabled = true;
+        renderer.vr.setSession(session, {
+          frameOfReferenceType: 'stage',
+        });
+        renderer.vr.setAnimationLoop(animate);
+
+        console.log('entered xr');
+
+        accept();
+      });
+    });
+  } else { // WebVR
+    console.log('request device');
+    const displays = await navigator.getVRDisplays();
+    display = displays[0];
+
+    if (display) {
+      console.log('request present vr');
+      await display.requestPresent([{
+        source: renderer.domElement,
+      }]);
+
+      const {renderWidth: width, renderHeight: height} = display.getEyeParameters('left');
+      renderer.setSize(width * 2, height);
+
+      renderer.setAnimationLoop(null);
+      renderer.vr.enabled = true;
+      renderer.vr.setAnimationLoop(animate);
+
+      console.log('entered vr');
+    } else {
+      console.log('no vr displays');
+      renderer.setAnimationLoop(animate);
+    }
+  }
+};
+const _endVrDisplay = async () => {
+  if (display.session) {
+    await display.session.end();
+  } else if (display) {
+    await display.exitPresent();
+  }
+
+  display = null;
+  // renderer.domElement.framebuffer = null; // XXX destroy this framebuffer
+};
+
+// bootstrap fakeXr
+const _emitLayersVrDisplayActivate = () => {
+  for (let i = 0; i < layers.length; i++) {
+    const layer = layers[i];
+    if (layer.tagName === 'IFRAME' && layer.d === 3) {
+      // layer.contentWindow.runAsync('vrdisplayactivate');
+    }
+  }
+};
+const _emitLayersExitPresent = () => {
+  for (let i = 0; i < layers.length; i++) {
+    const layer = layers[i];
+    if (layer.tagName === 'IFRAME' && layer.d === 3) {
+      // layer.contentWindow.runAsync('exitPresent');
+    }
+}
+};
 const _startFakeVrDisplay = async (width, height) => {
   fakeXrDisplay = new FakeXRDisplay();
   if (isFinite(width)) {
@@ -3327,6 +3436,7 @@ const _startFakeVrDisplay = async (width, height) => {
       renderer.vr.setSession(null);
       renderer.vr.setAnimationLoop(null);
 
+       _emitLayersExitPresent();
 
       session.removeEventListener('end', _end);
     };
@@ -3342,13 +3452,14 @@ const _startFakeVrDisplay = async (width, height) => {
         });
         renderer.vr.setAnimationLoop(animate);
 
+         _emitLayersVrDisplayActivate();
 
         accept();
       });
     });
   } else {
     const displays = await navigator.getVRDisplays();
-    const display = displays[0];
+    const fakeDisplay = displays[0];
     await display.requestPresent([{
       source: renderer.domElement,
     }]);
@@ -3356,6 +3467,7 @@ const _startFakeVrDisplay = async (width, height) => {
     fakeXrDisplay.display = display;
 
     const _vrdisplaypresentchange = () => {
+       _emitLayersExitPresent();
 
       display.removeEventListener('vrdisplaypresentchange', _vrdisplaypresentchange);
     };
