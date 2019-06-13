@@ -22,6 +22,7 @@ class Engine extends React.Component {
       this.handleURLChange = this.handleURLChange.bind(this);
       this.state = {
         consoleOpen: false,
+        domView: false,
         flags: [],
         item: null,
         settings: null,
@@ -219,6 +220,13 @@ class Engine extends React.Component {
       });
     }
 
+    toggleDomView(e) {
+      this.setState({
+        domView: !this.state.domView,
+      });
+      console.log("domview = " + this.state.domView);
+    }
+
     blur() {
       this.setState({
         item: null,
@@ -321,6 +329,10 @@ class Engine extends React.Component {
               <i class="fal fa-plus-hexagon"/>
             </div>
             <div className="buttons">
+              <div className="button" onClick={e => this.toggleDomView(e)}>
+                <i class="fas fa-laptop"/>
+                <div className="label">Dom View</div>
+              </div>
               <div className="button" onClick={e => this.toggleConsoleOpen(e)}>
                 <i class="fas fa-terminal"/>
                 <div className="label">Console</div>
@@ -355,7 +367,7 @@ class Engine extends React.Component {
                 _postViewportMessage();
               }}>
             <div className="engine-right">
-              <Dom/>
+              <Dom domView={this.state.domView}/>
             </div>
             </Resizable>
           </div>
