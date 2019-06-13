@@ -227,7 +227,7 @@ class Engine extends React.Component {
       setTimeout(
         function() {
           _postViewportMessage();
-        }, 1);
+        }, 100);
     }
 
     blur() {
