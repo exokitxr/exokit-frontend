@@ -224,7 +224,6 @@ class Engine extends React.Component {
       this.setState({
         domView: !this.state.domView,
       });
-      console.log("domview = " + this.state.domView);
     }
 
     blur() {
