@@ -291,7 +291,7 @@ class DomItem extends React.Component {
             <li className={this.getClassnames()}>
               <div className="dom-item-label" style={this.getStyle()} onClick={() => this.props.onClick(el)} onMouseEnter={() => this.props.onMouseEnter(el)} onMouseLeave={() => this.props.onMouseLeave(el)} ref={this.domElRef} tabIndex={-1}>
                 <div className="dom-item-arrow" onClick={e => this.toggleOpen(e)}>⮞</div>
-                <div className="dom-item-name">{_el2Text(el)}</div>
+                <input type="text" className="dom-item-name"  id="dom-item-name" value={_el2Text(el)}/>
               </div>
               <div className="dom-item-children">
                 {el.childNodes.map((childNode, i) => <DomItem domView={this.state.domView} el={childNode} level={level+1} selectEl={this.props.selectEl} hoverEl={this.props.hoverEl} onClick={el => this.props.onClick(el)} onMouseEnter={this.props.onMouseEnter} onMouseLeave={this.props.onMouseLeave} key={i}/>)}
@@ -316,7 +316,7 @@ class DomItem extends React.Component {
         return (
           <li className={this.getClassnames()}>
             <div className="dom-item-label" style={this.getStyle()} onClick={() => this.props.onClick(el)} onMouseEnter={() => this.props.onMouseEnter(el)} onMouseLeave={() => this.props.onMouseLeave(el)} ref={this.domElRef} tabIndex={-1}>
-              <div className="dom-item-arrow" onClick={e => this.toggleDropdownOpen(e)}>...</div>
+              <div className="dom-item-dots" onClick={e => this.toggleDropdownOpen(e)}>...</div>
               <div className="dom-item-name"> {_el3Text(el)}</div>
             </div>
             <div className="dom-item-dropmenu">{this.state.dropdownOpen ?
