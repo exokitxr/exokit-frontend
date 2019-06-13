@@ -224,6 +224,10 @@ class Engine extends React.Component {
       this.setState({
         domView: !this.state.domView,
       });
+      setTimeout(
+        function() {
+          _postViewportMessage();
+        }, 1);
     }
 
     blur() {
