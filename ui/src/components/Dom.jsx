@@ -65,6 +65,7 @@ class Dom extends React.Component {
     };
     _decorateKeypaths(root);
     this.state = {
+      domView: this.props.domView,
       root,
       selectEl: null,
       epoch: 0,
@@ -97,6 +98,20 @@ class Dom extends React.Component {
     });
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.domView !== prevState.domView) {
+      this.setState({
+        domView: prevState.domView,
+      });
+    }
+  }
+
+  static getDerivedStateFromProps(nextProps, prevState) {
+    return {
+      domView: nextProps.domView,
+    };
+  }
+
   onClick(el) {
     if (this.state.selectEl !== el) {
       this.setState({
@@ -114,7 +129,7 @@ class Dom extends React.Component {
   render() {
     return (
       <div className="Dom">
-        <DomList root={this.state.root} selectEl={this.state.selectEl} onClick={el => this.onClick(el)} />
+        <DomList domView={this.state.domView} root={this.state.root} selectEl={this.state.selectEl} onClick={el => this.onClick(el)} />
          {/*this.state.selectEl ? <DomDetail el={this.state.selectEl} epoch={this.state.epoch} /> : null*/}
       </div>
     );
@@ -127,6 +142,7 @@ class DomList extends React.Component {
 
     this.state = {
       hoverEl: null,
+      domView: this.props.domView,
     };
   }
 
@@ -144,10 +160,24 @@ class DomList extends React.Component {
     }
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.domView !== prevState.domView) {
+      this.setState({
+        domView: prevState.domView,
+      });
+    }
+  }
+
+  static getDerivedStateFromProps(nextProps, prevState) {
+    return {
+      domView: nextProps.domView,
+    };
+  }
+
   render() {
     return (
       <ul className="dom-list">
-        <DomItem el={this.props.root} level={0} selectEl={this.props.selectEl} hoverEl={this.state.hoverEl} onClick={el => this.props.onClick(el)} onMouseEnter={el => this.onMouseEnter(el)} onMouseLeave={el => this.onMouseLeave(el)}/>
+        <DomItem domView={this.state.domView} el={this.props.root} level={0} selectEl={this.props.selectEl} hoverEl={this.state.hoverEl} onClick={el => this.props.onClick(el)} onMouseEnter={el => this.onMouseEnter(el)} onMouseLeave={el => this.onMouseLeave(el)}/>
       </ul>
     );
   }
@@ -162,13 +192,19 @@ class DomItem extends React.Component {
     this.state = {
       open: true,
       dropdownOpen: false,
+      domView: this.props.domView,
     };
   }
 
   componentDidMount() {
     this.bindDomEl();
   }
-  componentDidUpdate() {
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.domView !== prevState.domView) {
+      this.setState({
+        domView: prevState.domView,
+      });
+    }
     this.bindDomEl();
   }
 
@@ -190,6 +226,12 @@ class DomItem extends React.Component {
       classNames.push('hover');
     }
     return classNames.join(' ');
+  }
+
+  static getDerivedStateFromProps(nextProps, prevState) {
+    return {
+      domView: nextProps.domView,
+    };
   }
 
   getStyle() {
@@ -243,41 +285,69 @@ class DomItem extends React.Component {
   render() {
     const {el, level} = this.props;
 
-    if (el.nodeType === Node.ELEMENT_NODE && el.tagName === 'IFRAME') {
-      return (
-        <li className={this.getClassnames()}>
-          <div className="dom-item-label" style={this.getStyle()} onClick={() => this.props.onClick(el)} onMouseEnter={() => this.props.onMouseEnter(el)} onMouseLeave={() => this.props.onMouseLeave(el)} ref={this.domElRef} tabIndex={-1}>
-            <div className="dom-item-arrow" onClick={e => this.toggleDropdownOpen(e)}>...</div>
-            <div className="dom-item-name"> {_el3Text(el)}</div>
-          </div>
-          <div className="dom-item-dropmenu">{this.state.dropdownOpen ?
-            <div className="dom-detail">
-              <div className="dom-detail-button" onClick={() => this.cloneTab()}>Clone</div>
-              <div className="dom-detail-button" onClick={() => this.deleteTab()}>Delete</div>
-            </div>
-             : null}</div>
-        </li>
-        );
-    } else if (el.nodeType === Node.ELEMENT_NODE) {
-      return (
-        <li className={this.getClassnames()}>
-          <div className="dom-item-children">
-            {el.childNodes.map((childNode, i) => <DomItem el={childNode} level={level} selectEl={this.props.selectEl} hoverEl={this.props.hoverEl} onClick={el => this.props.onClick(el)} onMouseEnter={this.props.onMouseEnter} onMouseLeave={this.props.onMouseLeave} key={i}/>)}
-          </div>
-        </li>
-      );
-    } else if (el.nodeType === Node.TEXT_NODE) {
-      if (/\S/.test(el.value)) { // has non-whitespace
+      if (this.state.domView) {
+        if (el.nodeType === Node.ELEMENT_NODE) {
+          return (
+            <li className={this.getClassnames()}>
+              <div className="dom-item-label" style={this.getStyle()} onClick={() => this.props.onClick(el)} onMouseEnter={() => this.props.onMouseEnter(el)} onMouseLeave={() => this.props.onMouseLeave(el)} ref={this.domElRef} tabIndex={-1}>
+                <div className="dom-item-arrow" onClick={e => this.toggleOpen(e)}>⮞</div>
+                <div className="dom-item-name">{_el2Text(el)}</div>
+              </div>
+              <div className="dom-item-children">
+                {el.childNodes.map((childNode, i) => <DomItem domView={this.state.domView} el={childNode} level={level+1} selectEl={this.props.selectEl} hoverEl={this.props.hoverEl} onClick={el => this.props.onClick(el)} onMouseEnter={this.props.onMouseEnter} onMouseLeave={this.props.onMouseLeave} key={i}/>)}
+              </div>
+            </li>
+          );
+        } else if (el.nodeType === Node.TEXT_NODE) {
+          if (/\S/.test(el.value)) { // has non-whitespace
+            return (
+              <li className={this.getClassnames()} onClick={() => this.props.onClick(el)} onMouseEnter={() => this.props.onMouseEnter(el)} onMouseLeave={() => this.props.onMouseLeave(el)} ref={this.domElRef} tabIndex={-1}>
+                <div className="dom-item-text" style={this.getStyle()}>"{el.value}"</div>
+              </li>
+            );
+          } else {
+            return null;
+          }
+        } else {
+          return null;
+        }
+    } else if (!this.state.domView) {
+      if (el.nodeType === Node.ELEMENT_NODE && el.tagName === 'IFRAME') {
         return (
-          <li className={this.getClassnames()} onClick={() => this.props.onClick(el)} onMouseEnter={() => this.props.onMouseEnter(el)} onMouseLeave={() => this.props.onMouseLeave(el)} ref={this.domElRef} tabIndex={-1}>
-            <div className="dom-item-text" style={this.getStyle()}></div>
+          <li className={this.getClassnames()}>
+            <div className="dom-item-label" style={this.getStyle()} onClick={() => this.props.onClick(el)} onMouseEnter={() => this.props.onMouseEnter(el)} onMouseLeave={() => this.props.onMouseLeave(el)} ref={this.domElRef} tabIndex={-1}>
+              <div className="dom-item-arrow" onClick={e => this.toggleDropdownOpen(e)}>...</div>
+              <div className="dom-item-name"> {_el3Text(el)}</div>
+            </div>
+            <div className="dom-item-dropmenu">{this.state.dropdownOpen ?
+              <div className="dom-detail">
+                <div className="dom-detail-button" onClick={() => this.cloneTab()}>Clone</div>
+                <div className="dom-detail-button" onClick={() => this.deleteTab()}>Delete</div>
+              </div>
+               : null}</div>
+          </li>
+          );
+      } else if (el.nodeType === Node.ELEMENT_NODE) {
+        return (
+          <li className={this.getClassnames()}>
+            <div className="dom-item-children">
+              {el.childNodes.map((childNode, i) => <DomItem domView={this.state.domView} el={childNode} level={level} selectEl={this.props.selectEl} hoverEl={this.props.hoverEl} onClick={el => this.props.onClick(el)} onMouseEnter={this.props.onMouseEnter} onMouseLeave={this.props.onMouseLeave} key={i}/>)}
+            </div>
           </li>
         );
+      } else if (el.nodeType === Node.TEXT_NODE) {
+        if (/\S/.test(el.value)) { // has non-whitespace
+          return (
+            <li className={this.getClassnames()} onClick={() => this.props.onClick(el)} onMouseEnter={() => this.props.onMouseEnter(el)} onMouseLeave={() => this.props.onMouseLeave(el)} ref={this.domElRef} tabIndex={-1}>
+              <div className="dom-item-text" style={this.getStyle()}></div>
+            </li>
+          );
+        } else {
+          return null;
+        }
       } else {
         return null;
       }
-    } else {
-      return null;
     }
   }
 }
