@@ -22,7 +22,13 @@
   cursor: pointer;
   user-select: none;
 }
-.Dom > .dom-list .dom-item.dropdownOpen > .dom-item-label .dom-item-arrow {
+.Dom > .dom-list .dom-item.open > .dom-item-label .dom-item-arrow {
+  color: #888;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  transform: rotatez(90deg);
+}
+.Dom > .dom-list .dom-item.dropdownOpen > .dom-item-label .dom-item-dots {
   color: #888;
   padding-top: 5px;
   padding-bottom: 5px;
@@ -38,23 +44,36 @@
   display: flex;
 }
 .Dom > .dom-list .dom-item.hover > .dom-item-label,
-.Dom > .dom-list .dom-item.hover > .dom-item-text
+.Dom > .dom-list .dom-item.hover > .dom-item-text,
+.Dom > .dom-list .dom-item.hover > .dom-item-label .dom-item-name,
+.Dom > .dom-list .dom-item.hover > .dom-item-label .dom-item-name:focus
 {
   background-color: #333;
 }
 .Dom > .dom-list .dom-item.select > .dom-item-label,
-.Dom > .dom-list .dom-item.select > .dom-item-text
+.Dom > .dom-list .dom-item.select > .dom-item-text,
+.Dom > .dom-list .dom-item.select > .dom-item-label .dom-item-name,
+.Dom > .dom-list .dom-item.hover > .dom-item-label .dom-item-name:focus
 {
   background-color: #333;
 }
-.Dom > .dom-list .dom-item.select > .dom-item-label .dom-item-arrow {
+.Dom > .dom-list .dom-item > .dom-item-label .dom-item-arrow {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  color: #888;
+  transform: none;
+}
+.Dom > .dom-list .dom-item.select > .dom-item-label .dom-item-dots {
   color: #888;
 }
 
 .Dom > .dom-list .dom-item.hover > .dom-item-label .dom-item-arrow {
   color: #888;
 }
-.Dom > .dom-list .dom-item > .dom-item-label .dom-item-arrow {
+.Dom > .dom-list .dom-item.hover > .dom-item-label .dom-item-dots {
+  color: #888;
+}
+.Dom > .dom-list .dom-item > .dom-item-label .dom-item-dots {
   color: #444;
   transform: rotatez(90deg);
   padding-top: 5px;
@@ -65,8 +84,17 @@
   padding-top: 5px;
   padding-left: 3px;
   white-space: nowrap;
+  border: none;
+  padding: 2px;
+  background-color: #232526;
+  color: white;
 }
-
+.Dom > .dom-list .dom-item > .dom-item-label .dom-item-name:focus {
+  border: 1px solid black;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+  background-color: #333;
+}
 .Dom > .dom-list .dom-item > .dom-item-children {
   display: none;
   flex-direction: column;
