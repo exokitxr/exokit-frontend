@@ -993,6 +993,19 @@ uiIframe.onload = () => {
           _bindEventTarget('xr');
         } else if (target === 'xr') {
           console.log('xr click');
+          if(fakeXrDisplay){
+            _endFakeVrDisplay()
+              .then(() => _startVrDisplay())
+              .catch(err => {
+                console.warn(err.stack);
+              });
+          } else if(display){
+             _endVrDisplay()
+              .then(() => _startFakeVrDisplay())
+              .catch(err => {
+                console.warn(err.stack);
+              });
+          }
         } else if (target === 'transform') {
           console.log('transform click');
         }
@@ -1173,7 +1186,9 @@ const _bindEventTarget = target => {
       transformControls.iframe = iframe;
 
       transformControls.addEventListener('dragging-changed', e => {
-        orbitControls.enabled = !e.value;
+        if(orbitControls){
+          orbitControls.enabled = !e.value;
+        }
       });
       transformControls.addEventListener('change', e => {
         iframe.position = mesh.position.toArray();
@@ -1200,57 +1215,59 @@ const _bindEventTarget = target => {
 
     _bindEvents({
       mousemove(e) {
-        const localCamera = camera;
-        localCamera.matrixWorldInverse.fromArray(fakeXrDisplay.viewMatrix);
-        localCamera.matrixWorld.getInverse(localCamera.matrixWorldInverse);
-        localCamera.projectionMatrix.fromArray(fakeXrDisplay.projectionMatrix);
-        localCamera.projectionMatrixInverse.getInverse(localCamera.projectionMatrix);
+        if(fakeXrDisplay){
+          const localCamera = camera;
+          localCamera.matrixWorldInverse.fromArray(fakeXrDisplay.viewMatrix);
+          localCamera.matrixWorld.getInverse(localCamera.matrixWorldInverse);
+          localCamera.projectionMatrix.fromArray(fakeXrDisplay.projectionMatrix);
+          localCamera.projectionMatrixInverse.getInverse(localCamera.projectionMatrix);
 
-        localCamera.matrixWorld.decompose(localCamera.position, localCamera.quaternion, localCamera.scale);
-        const rect = document.body.getBoundingClientRect();
-        localRaycaster.setFromCamera(
-          localVector2D.set(
-            ((e.clientX / rect.width) % 0.5 * 2) * 2 - 1,
-            (-e.clientY / rect.height) * 2 + 1
-            /* ((e.clientX / rect.width * viewport.z - viewport.x) % 0.5 * 2) * 2 - 1,
-            (-e.clientY / rect.height * viewport.w - viewport.y) * 2 + 1 */
-          ),
-          localCamera
-        );
-        const line = localLine.set(
-          localRaycaster.ray.origin,
-          localVector.copy(localRaycaster.ray.origin)
-            .add(localVector2.copy(localRaycaster.ray.direction).multiplyScalar(100))
-        );
-        /* cubeMesh.position.copy(localRaycaster.ray.origin)
-          .add(localVector2.copy(localRaycaster.ray.direction).multiplyScalar(5));
-        cubeMesh.updateMatrixWorld(); */
-        const distanceSpecs = layers.map(layer => {
-          if (layer.tagName === 'IFRAME') {
-            line.closestPointToPoint(localVector.fromArray(_parseVector(layer.position)), true, localVector2);
-            const distance = localVector.distanceTo(localVector2);
-            if (distance < 1) {
-              return {
-                iframe: layer,
-                distance,
-              };
+          localCamera.matrixWorld.decompose(localCamera.position, localCamera.quaternion, localCamera.scale);
+          const rect = document.body.getBoundingClientRect();
+          localRaycaster.setFromCamera(
+            localVector2D.set(
+              ((e.clientX / rect.width) % 0.5 * 2) * 2 - 1,
+              (-e.clientY / rect.height) * 2 + 1
+              /* ((e.clientX / rect.width * viewport.z - viewport.x) % 0.5 * 2) * 2 - 1,
+              (-e.clientY / rect.height * viewport.w - viewport.y) * 2 + 1 */
+            ),
+            localCamera
+          );
+          const line = localLine.set(
+            localRaycaster.ray.origin,
+            localVector.copy(localRaycaster.ray.origin)
+              .add(localVector2.copy(localRaycaster.ray.direction).multiplyScalar(100))
+          );
+          /* cubeMesh.position.copy(localRaycaster.ray.origin)
+            .add(localVector2.copy(localRaycaster.ray.direction).multiplyScalar(5));
+          cubeMesh.updateMatrixWorld(); */
+          const distanceSpecs = layers.map(layer => {
+            if (layer.tagName === 'IFRAME') {
+              line.closestPointToPoint(localVector.fromArray(_parseVector(layer.position)), true, localVector2);
+              const distance = localVector.distanceTo(localVector2);
+              if (distance < 1) {
+                return {
+                  iframe: layer,
+                  distance,
+                };
+              } else {
+                return null;
+              }
             } else {
               return null;
             }
-          } else {
-            return null;
-          }
-        }).filter(spec => !!spec).sort((a, b) => a.distance - b.distance);
-        const closestIframe = distanceSpecs.length > 0 ? distanceSpecs[0].iframe : null;
-        const shouldTransform = (!!transformControls && transformControls.dragging) || !!closestIframe;
-        if (shouldTransform && (!transformControls || (transformControls.iframe !== closestIframe && !transformControls.dragging))) {
-          if (transformControls) {
+          }).filter(spec => !!spec).sort((a, b) => a.distance - b.distance);
+          const closestIframe = distanceSpecs.length > 0 ? distanceSpecs[0].iframe : null;
+          const shouldTransform = (!!transformControls && transformControls.dragging) || !!closestIframe;
+          if (shouldTransform && (!transformControls || (transformControls.iframe !== closestIframe && !transformControls.dragging))) {
+            if (transformControls) {
+              _removeTransformControls();
+            }
+
+            _addTransformControls(localCamera, closestIframe);
+          } else if (!shouldTransform && transformControls) {
             _removeTransformControls();
           }
-
-          _addTransformControls(localCamera, closestIframe);
-        } else if (!shouldTransform && transformControls) {
-          _removeTransformControls();
         }
       },
       keydown(e) {
@@ -1267,7 +1284,9 @@ const _bindEventTarget = target => {
       },
     });
 
-    _addOrbitControls();
+    if(fakeXrDisplay){
+      _addOrbitControls();
+    }
     unbindEvents = (unbindEvents => function() {
       unbindEvents.apply(this, arguments);
       _removeOrbitControls();
@@ -3066,7 +3085,7 @@ function animate(time, frame) {
   _updateButtons();
 
   const _updateOrbitControls = () => {
-    if (orbitControls) {
+    if (orbitControls && fakeXrDisplay) {
       orbitControls.update();
 
       fakeXrDisplay.position.copy(orbitControls.object.position);
@@ -3173,14 +3192,81 @@ function animate(time, frame) {
   lastTime = now;
 }
 
-// bootstrap
+// bootstrap Xr
+const _startVrDisplay = async () => {
+  if (navigator.xr) {
+    const session = await navigator.xr.requestSession({
+      exclusive: true,
+    });
+    display = session;
+    const _end = () => {
+      renderer.vr.enabled = false;
+      renderer.vr.setSession(null);
+      renderer.vr.setAnimationLoop(null);
+      session.removeEventListener('end', _end);
+    };
+    session.addEventListener('end', _end);
+    await new Promise((accept, reject) => {
+      session.requestAnimationFrame((timestamp, frame) => {
+        session.layers = layers;
+        renderer.vr.setSession(session, {
+          frameOfReferenceType: 'stage',
+        });
+        const {views} = frame.getViewerPose();
+        const viewport = session.baseLayer.getViewport(views[0]);
+        const width = viewport.width;
+        const height = viewport.height;
+        // console.log("session.isPresenting = " + session.isPresenting());
+        // renderer.setSize(width * 2, height);
+        renderer.setSize(width, height);
+        renderer.setAnimationLoop(null);
+        renderer.vr.enabled = true;
+        renderer.vr.setSession(session, {
+          frameOfReferenceType: 'stage',
+        });
+        renderer.vr.setAnimationLoop(animate);
+        console.log('entered xr');
+        accept();
+      });
+    });
+  } else { // WebVR
+    console.log('request device');
+    const displays = await navigator.getVRDisplays();
+    display = displays[0];
+    if (display) {
+      console.log('request present vr');
+      await display.requestPresent([{
+        source: renderer.domElement,
+      }]);
+      const {renderWidth: width, renderHeight: height} = display.getEyeParameters('left');
+      renderer.setSize(width * 2, height);
+      renderer.setAnimationLoop(null);
+      renderer.vr.enabled = true;
+      renderer.vr.setAnimationLoop(animate);
+      console.log('entered vr');
+    } else {
+      console.log('no vr displays');
+      renderer.setAnimationLoop(animate);
+    }
+  }
+};
+const _endVrDisplay = async () => {
+  if (display) {
+    await display.end();
+    // await display.exitPresent();
+  }
+  display = null;
+  // renderer.domElement.framebuffer = null; // XXX destroy this framebuffer
+};
 
+
+// bootstrap fakeXr
 const _emitLayersVrDisplayActivate = () => {
   for (let i = 0; i < layers.length; i++) {
     const layer = layers[i];
 
     if (layer.tagName === 'IFRAME' && layer.d === 3) {
-      layer.contentWindow.runAsync('vrdisplayactivate');
+      // layer.contentWindow.runAsync('vrdisplayactivate');
     }
   }
 };
@@ -3189,7 +3275,7 @@ const _emitLayersExitPresent = () => {
     const layer = layers[i];
 
     if (layer.tagName === 'IFRAME' && layer.d === 3) {
-      layer.contentWindow.runAsync('exitPresent');
+      // layer.contentWindow.runAsync('exitPresent');
     }
   }
 };
@@ -3238,12 +3324,12 @@ const _startFakeVrDisplay = async (width, height) => {
     });
   } else {
     const displays = await navigator.getVRDisplays();
-    const display = displays[0];
+    const fakeDisplay = displays[0];
     await display.requestPresent([{
       source: renderer.domElement,
     }]);
 
-    fakeXrDisplay.display = display;
+    fakeXrDisplay.display = fakeDisplay;
 
     const _vrdisplaypresentchange = () => {
       _emitLayersExitPresent();
@@ -3270,7 +3356,7 @@ const _endFakeVrDisplay = async () => {
 
   // renderer.domElement.framebuffer = null; // XXX destroy this framebuffer
 };
-_startFakeVrDisplay()
+_startVrDisplay()
   .then(() => {
     const tabUrl = (() => {
       const {t = 'tutorial.html'} = query;
