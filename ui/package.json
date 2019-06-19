@@ -8,7 +8,8 @@
     "react-dom": "^16.8.6",
     "react-markdown": "^4.0.8",
     "react-scripts": "3.0.0",
-    "yauzl": "^2.10.0"
+    "yauzl": "^2.10.0",
+    "yazl": "^2.5.1"
   },
   "scripts": {
     "start": "react-scripts start",
