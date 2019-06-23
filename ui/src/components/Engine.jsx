@@ -25,6 +25,7 @@ class Engine extends React.Component {
         flags: [],
         item: null,
         settings: null,
+        joinPartySettings: null,
         urlFocus: false,
         addTab: 'template',
         url: 'https://aframe.io/a-painter/',
@@ -114,6 +115,15 @@ class Engine extends React.Component {
       this.setState({
         item: null,
         settings,
+      }, () => {
+        this.postMenuStatus();
+      });
+    }
+
+    openJoinPartySettings(joinPartySettings) {
+      this.setState({
+        item: null,
+        joinPartySettings,
       }, () => {
         this.postMenuStatus();
       });
@@ -213,6 +223,7 @@ class Engine extends React.Component {
       this.setState({
         item: null,
         settings: null,
+        joinPartySettings: null,
         urlFocus: false,
       }, () => {
         this.postMenuStatus();
@@ -222,7 +233,7 @@ class Engine extends React.Component {
     postMenuStatus() {
       window.postMessage({
         method: 'menu',
-        open: this.state.item !== null || this.state.settings !== null || this.state.urlFocus,
+        open: this.state.item !== null || this.state.settings !== null || this.state.joinPartySettings !== null ||this.state.urlFocus,
       });
     }
 
@@ -242,6 +253,7 @@ class Engine extends React.Component {
               <div className={this.menuItemPopupClassNames('settings')}>
                 <div className="menu-item-popup-item" onClick={() => this.openSettings('settings')}>Settings...</div>
                 <div className="menu-item-popup-item" onClick={() => this.openSettings('sdkPaths')}>SDK Paths...</div>
+                <div className="menu-item-popup-item" onClick={() => this.openJoinPartySettings('joinPartySettings')}>Party...</div>
               </div>
               <i class="fal fa-cogs"/>
               {/* <div>Settings</div> */}
@@ -349,6 +361,7 @@ class Engine extends React.Component {
             </Resizable>
           </div>
           <Settings settings={this.state.settings === 'settings'} open={!!this.state.settings} close={() => this.openSettings(null)}/>
+          <JoinPartySettings settings={this.state.joinPartySettings === 'joinPartySettings'} open={!!this.state.joinPartySettings} close={() => this.openJoinPartySettings(null)}/>
         </div>
       );
     }
@@ -502,5 +515,91 @@ class Settings extends React.Component {
     );
   }
 }
+
+class JoinPartySettings extends React.Component {
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+    };
+  }
+
+  componentDidMount() {
+  }
+
+  classNames() {
+    const classNames = ['joinPartySettings'];
+    if (this.props.open) {
+      classNames.push('open');
+    }
+    return classNames.join(' ');
+  }
+
+  onMetricsBlur() {
+  }
+
+  joinParty() {
+    const registryUrl = document.getElementById('registryUrl');
+    const serverList = document.getElementById('serverList');
+
+    window.postMessage({
+      method: 'joinParty',
+      registryUrl: registryUrl.value,
+      name: serverList.value
+    });
+  }
+
+  listPartyServers() {
+    const registryUrl = document.getElementById('registryUrl');
+    window.postMessage({
+      method: 'listPartyServers',
+      registryUrl: registryUrl.value
+    });
+
+    const serverList = document.getElementById('serverList');
+    window.addEventListener('message',function(e) {
+      serverList.focus();
+      for (let i = 0; i < e.data.servers.length; i++) {
+        const {name} = e.data.servers[i];
+
+        var option = document.createElement("option");
+        option.value = name;
+        option.text = name;
+        serverList.appendChild(option);
+      }
+      serverList.select();
+    },false);
+  }
+
+  render() {
+    return (
+      <div className={this.classNames()}>
+        <div className="settings-background" onClick={() => this.props.close()}></div>
+        <div className="settings-foreground">
+          <div className="title"><b>Party</b></div>
+          <div>
+            <label>Registry URL</label>
+            <br/>
+            <textarea id="registryUrl" />
+            <div className="button" id="button" onClick={() => this.listPartyServers()}>
+              <div className="label"><b>List Party Servers</b></div>
+            </div>
+            <hr/>
+            <label>Server List:</label>
+            <br/>
+            <select id="serverList" />
+            <br/>
+            <div className="button" id="button" onClick={() => this.joinParty()}>
+              <div className="label"><b>Join Party</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+
+
 
 export default Engine;
