@@ -568,7 +568,6 @@ class JoinPartySettings extends React.Component {
         option.text = name;
         serverList.appendChild(option);
       }
-      serverList.select();
     },false);
   }
 
@@ -579,12 +578,9 @@ class JoinPartySettings extends React.Component {
         <div className="settings-foreground">
           <div className="title"><b>Party</b></div>
           <div>
-            <label>Registry URL</label>
+            <label>Registry URL:</label>
             <br/>
-            <textarea id="registryUrl" />
-            <div className="button" id="button" onClick={() => this.listPartyServers()}>
-              <div className="label"><b>List Party Servers</b></div>
-            </div>
+            <input id="registryUrl" onChange={() => this.listPartyServers()} />
             <hr/>
             <label>Server List:</label>
             <br/>
