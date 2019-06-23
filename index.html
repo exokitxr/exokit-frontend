@@ -1058,6 +1058,37 @@ uiIframe.onload = () => {
         window.browser.setSetting(key, value);
         break;
       }
+      case 'listPartyServers': {
+        const {registryUrl} = m.data;
+
+        if (!serversLoading) {
+          XRMultiplayer.requestServers(registryUrl)
+            .then(result => {
+              servers = result.servers;
+              serversLoading = false;
+
+              uiIframe.contentWindow.postMessage({
+                servers: servers
+              });
+            })
+            .catch(err => {
+              console.warn(err.stack);
+
+              serversLoading = false;
+
+            });
+
+          serversLoading = true;
+        }
+
+       break;
+     }
+      case 'joinParty': {
+        const {registryUrl, name} = m.data;
+        _openServer(`${registryUrl}/servers/${name}`, true);
+
+       break;
+     }
       case 'fakeVrMetrics': {
         const {width, height} = m.data;
         _endFakeVrDisplay()
@@ -1178,6 +1209,12 @@ const _bindEventTarget = target => {
       transformControls = new THREE.TransformControls(camera, document.body, viewport);
       transformControls.iframe = iframe;
 
+      for(i = 0; i < tabs.length; i++){
+        if(tabs[i].iframe === iframe){
+          transformControls.transformId = tabs[i].id;
+        }
+      }
+
       transformControls.addEventListener('dragging-changed', e => {
         orbitControls.enabled = !e.value;
       });
@@ -1185,6 +1222,14 @@ const _bindEventTarget = target => {
         iframe.position = mesh.position.toArray();
         iframe.orientation = mesh.quaternion.toArray();
         iframe.scale = mesh.scale.toArray();
+        if (serverConnectedUrl) {
+          const objectMesh = xrmp.getObjectMeshes().find(objectMesh => objectMesh.object.id === transformControls.transformId);
+          const {object} = objectMesh;
+          const {objectMatrix} = object;
+          mesh.position.toArray(objectMatrix.position);
+          mesh.quaternion.toArray(objectMatrix.quaternion);
+          object.pushUpdate();
+        }
       });
 
       const mesh = new THREE.Object3D();
