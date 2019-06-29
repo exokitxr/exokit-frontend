@@ -121,6 +121,18 @@
       // camera.lookAt(new THREE.Vector3());
       scene.add(camera);
 
+      var listener = new THREE.AudioListener();
+      camera.add( listener );
+
+      var sound = new THREE.PositionalAudio( listener );
+      var audioLoader = new THREE.AudioLoader();
+      audioLoader.load( 'sounds/exobot.mp3', function( buffer ) {
+        sound.setBuffer( buffer );
+        sound.setRefDistance( 20 );
+        sound.setLoop(true);
+        sound.play();
+      });
+
       const ambientLight = new THREE.AmbientLight(0x808080);
       scene.add(ambientLight);
 
@@ -253,6 +265,7 @@
           model = o;
 
           scene.add(o);
+          o.add( sound );
           // scene.add(o.children[0]);
           // scene.add(o.children[0]);
 
