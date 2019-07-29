@@ -726,7 +726,7 @@ const fontSpec = await Promise.all([
 const _makeTextMesh = (s = '', color = 0x000000, size = 1) => {
   const {font, texture} = fontSpec;
 
-  // create a geometry of packed bitmap glyphs, 
+  // create a geometry of packed bitmap glyphs,
   // word wrapped to 300px and right-aligned
   var geometry = createTextGeometry({
     width: Infinity,
@@ -1839,6 +1839,7 @@ const _makeIconMesh = (url, img, type, onclick, oncrosshair, onclose, pagable) =
 
   if (url && type) {
     const iframe = _makeIframe(url, type);
+    console.log("makeiframe");
 
     if (type === 'browser' || type === 'volume') {
       mesh.iframe = iframe;
@@ -2094,7 +2095,7 @@ const _removeApp = iconMesh => {
   if (iconMesh.iframe) {
     layers.splice(layers.indexOf(iconMesh.iframe), 1);
   }
-  
+
   if (!trayMesh.appIconMeshes.children.some(iconMesh => iconMesh.x === selectedIconCoord.x && iconMesh.y === selectedIconCoord.y)) {
     if (trayMesh.appIconMeshes.children.some(iconMesh => iconMesh.x === 0 && iconMesh.y === 0)) {
       selectedIconCoord.set(0, 0);
@@ -2102,7 +2103,7 @@ const _removeApp = iconMesh => {
       selectedIconMesh = trayMesh.actionIconMeshes;
       selectedIconCoord.set(1, 0);
       selectedIconPage = 0;
-      
+
       trayMesh.labelMesh.textMesh.setText(DEFAULT_URL);
       trayMesh.labelMesh.visible = true;
       trayMesh.actionIconMeshes.children.find(mesh => mesh.x === 5 && mesh.y === 1).localVisible = true;
@@ -2213,7 +2214,7 @@ const trayMesh = (() => {
       selectedIconMesh = actionIconMeshes;
       selectedIconCoord.set(1, 0);
       selectedIconPage = 0;
-      
+
       labelMesh.textMesh.setText(DEFAULT_URL);
       labelMesh.visible = true;
       actionIconMeshes.children.find(mesh => mesh.x === 5 && mesh.y === 1).localVisible = true;
@@ -2662,7 +2663,7 @@ const trayMesh = (() => {
   })();
   mesh.add(settingsMesh);
   mesh.settingsMesh = settingsMesh;
-  
+
   /* labelMesh.textMesh.addEventListener('update', e => {
     const {url} = e;
     if (selectedIconMesh === appIconMeshes) {
@@ -3495,7 +3496,7 @@ const portalFsh = `
       }
       gl_FragDepth = gl_FragCoord.z;
     } */
-    
+
     gl_FragColor.rgb += vec3(texCoordFull, 1.0) * 0.2;
   }
 `;
@@ -3875,6 +3876,31 @@ const _handleKey = (code, shiftKey) => {
   // console.log('handle key', code, shiftKey);
   const s = keyboardFocus.textMesh.getText();
   const index = keyboardFocus.caretMesh.getValue();
+
+  var obj = {
+     results: []
+  };
+
+  const url = 'http://13.56.80.83:9200/voxel/_search?q=' + s + '&pretty=true';
+  console.log("s = " + s);
+  fetch(url)
+  .then((resp) => resp.json())
+  .then(function(data) {
+    let results = data.hits.hits;
+    return results.map(function(hit) {
+      let source = hit._source;
+
+      obj.results.push({id: source.id, owner: source.owner, description: source.description, url: source.url});
+      console.log(JSON.stringify(obj, null, 2));
+    })
+  })
+  .catch(function(error) {
+    console.log("error 1 " + JSON.stringify(error));
+    console.log("error 2 " + error);
+  });
+
+
+
 
   if (code === 8) { // backspace
     if (index > 0) {
@@ -4698,7 +4724,7 @@ const _startFakeVrDisplay = async (width, height) => {
       }
     }
   });
-  
+
   renderer.setAnimationLoop(animate);
 };
 const _endFakeVrDisplay = async () => {
