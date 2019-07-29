@@ -3871,36 +3871,36 @@ const _handleSingleKey = c => {
   const index = keyboardFocus.caretMesh.getValue();
   keyboardFocus.textMesh.setText(s.slice(0, index) + c + s.slice(index));
   keyboardFocus.caretMesh.setValue(index + 1);
+
+  _autoCompleteSearch(keyboardFocus.textMesh.getText());
 };
-const _handleKey = (code, shiftKey) => {
-  // console.log('handle key', code, shiftKey);
-  const s = keyboardFocus.textMesh.getText();
-  const index = keyboardFocus.caretMesh.getValue();
-
-  var obj = {
-     results: []
-  };
-
+const _autoCompleteSearch = s => {
   const url = 'http://13.56.80.83:9200/voxel/_search?q=' + s + '&pretty=true';
-  console.log("s = " + s);
+  // console.log("s = " + s);
   fetch(url)
   .then((resp) => resp.json())
   .then(function(data) {
-    let results = data.hits.hits;
-    return results.map(function(hit) {
-      let source = hit._source;
+    if(data.hits){
+      let results = data.hits.hits;
+      return results.map(function(hit) {
+        let source = hit._source;
 
-      obj.results.push({id: source.id, owner: source.owner, description: source.description, url: source.url});
-      console.log(JSON.stringify(obj, null, 2));
-    })
+        console.log("description: " + source.description);
+        console.log("url: " + source.url);
+      })
+    }
   })
   .catch(function(error) {
     console.log("error 1 " + JSON.stringify(error));
     console.log("error 2 " + error);
   });
+}
+const _handleKey = (code, shiftKey) => {
+  // console.log('handle key', code, shiftKey);
+  const s = keyboardFocus.textMesh.getText();
+  const index = keyboardFocus.caretMesh.getValue();
 
-
-
+  _autoCompleteSearch(s);
 
   if (code === 8) { // backspace
     if (index > 0) {
